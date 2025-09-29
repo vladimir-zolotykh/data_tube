@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # PYTHON_ARGCOMPLETE_OK
-from typing import TypeVar
+from typing import TypeVar, Generator
 from collections.abc import Iterable
 import fnmatch
 import bz2
@@ -15,16 +15,15 @@ logline = """\
 
 nested_list = [1, 2, ["three", "four", ["cat", "apple"]], 4]
 
-T = TypeVar("T")
+# T = TypeVar("T")
 
 
-def flatten(item: Iterable[T] | T):
-    if isinstance(item, Iterable):
-        x: T
-        for x in item:
-            yield flatten(x)
-    else:
-        yield item
+def flatten(items: Iterable, ignore_types=(str, bytes)):
+    for x in items:
+        if isinstance(x, Iterable) and not isinstance(x, ignore_types):
+            yield from flatten(x, ignore_types)
+        else:
+            yield x
 
 
 if __name__ == "__main__":
