@@ -1,35 +1,49 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # PYTHON_ARGCOMPLETE_OK
-from collections.abc import Iterable, Generator
-from typing import Any, TypeVar, Union, Tuple, cast
+from typing import Generator
+import os
 import fnmatch
 import bz2
-import sys
 import gzip
 import re
 
-logline = """\
-74.6.25.144 - - [24/Feb/2008:00:48:16 -0600] "GET /dynamic/01Introduction.pdf HTTP/1.0" 200 3110734\
-"""
 
-nested_list = [1, 2, ["three", "four", ["cat", "apple"]], 4]
+def iter_lognames(
+    top: str = "www", pattern: str = "access-log*"
+) -> Generator[str, None, None]:
+    for path, _, names in os.walk(top):
+        for name in fnmatch.filter(names, pattern):
+            yield name
 
-T = TypeVar("T")
 
-
-def flatten(
-    items: Iterable[Union[T, Iterable[Any]]],
-    ignore_types: Tuple[type, ...] = (str, bytes),
-) -> Generator[T, None, None]:
-    x: T | Iterable[Any]
-    for x in items:
-        if isinstance(x, Iterable) and not isinstance(x, ignore_types):
-            yield from flatten(x, ignore_types)
+def iter_files(paths):
+    for path in paths:
+        if path.endswith(".gzip"):
+            fd = gzip.open(path)
+        elif path.endswith(".bz2"):
+            fd = bz2.open(path)
         else:
-            yield cast(T, x)
+            fd = open(path, "rb")
+        with fd as file:
+            yield file
+
+
+def cat_lines(files):
+    for file in files:
+        for line in file:
+            yield line
+
+
+def filter_lines(file, pattern: str = "(?i)python"):
+    for line in file:
+        if re.search(pattern, line):
+            yield line
 
 
 if __name__ == "__main__":
-    for x in flatten(nested_list):
-        print(x)
+    lognames = iter_lognames()
+    files = iter_files()
+    lines = cat_lines(files)
+    for line in filter_lines(lines):
+        print(line)
