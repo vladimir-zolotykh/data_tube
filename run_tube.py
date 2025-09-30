@@ -14,7 +14,7 @@ def iter_lognames(
 ) -> Generator[str, None, None]:
     for path, _, names in os.walk(top):
         for name in fnmatch.filter(names, pattern):
-            yield name
+            yield os.path.join(path, name)
 
 
 def iter_files(paths):
@@ -24,7 +24,7 @@ def iter_files(paths):
         elif path.endswith(".bz2"):
             fd = bz2.open(path)
         else:
-            fd = open(path, "rb")
+            fd = open(path, "rt")
         with fd as file:
             yield file
 
@@ -37,13 +37,14 @@ def cat_lines(files):
 
 def filter_lines(file, pattern: str = "(?i)python"):
     for line in file:
+        line = line.decode("utf-8") if isinstance(line, bytes) else line
         if re.search(pattern, line):
             yield line
 
 
 if __name__ == "__main__":
     lognames = iter_lognames()
-    files = iter_files()
+    files = iter_files(lognames)
     lines = cat_lines(files)
     for line in filter_lines(lines):
         print(line)
