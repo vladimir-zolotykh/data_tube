@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # PYTHON_ARGCOMPLETE_OK
-from typing import Generator
+from typing import Generator, TextIO, BinaryIO
 import os
 import fnmatch
 import bz2
@@ -17,27 +17,27 @@ def iter_lognames(
             yield os.path.join(path, name)
 
 
-def iter_files(paths):
+def iter_files(paths) -> Generator[TextIO, None, None]:
     for path in paths:
+        fd: TextIO
         if path.endswith(".gz"):
-            fd = gzip.open(path)
+            fd = gzip.open(path, "rt", encoding="utf-8")
         elif path.endswith(".bz2"):
-            fd = bz2.open(path)
+            fd = bz2.open(path, "rt")
         else:
             fd = open(path, "rt")
         with fd as file:
             yield file
 
 
-def cat_lines(files):
+def cat_lines(files) -> Generator[str | bytes, None, None]:
     for file in files:
         for line in file:
             yield line
 
 
-def filter_lines(file, pattern: str = "(?i)python"):
+def filter_lines(file, pattern: str = "(?i)python") -> Generator[str, None, None]:
     for line in file:
-        line = line.decode("utf-8") if isinstance(line, bytes) else line
         if re.search(pattern, line):
             yield line
 
