@@ -9,6 +9,7 @@ import gzip
 import re
 import argparse
 import argcomplete
+import psutil
 
 
 def iter_lognames(
@@ -55,6 +56,13 @@ parser.add_argument(
 )
 parser.add_argument("--fname-pattern", help="Select log files", default="access-log*")
 parser.add_argument("--search-pattern", help="Select log lines", default="(?i)python")
+parser.add_argument("--count-open-files", help="Count open files", action="store_true")
+
+
+def count_open_files() -> int:
+    proc = psutil.Process(os.getpid())
+    return len(proc.open_files())
+
 
 if __name__ == "__main__":
     argcomplete.autocomplete(parser)
@@ -74,3 +82,5 @@ if __name__ == "__main__":
         raise TypeError(
             f"{args.cmd}: Invalid command. Expected 'print' or 'count-bytes'"
         )
+    if args.count_open_files:
+        print("Open files: ", count_open_files())
