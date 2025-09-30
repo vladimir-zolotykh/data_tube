@@ -46,5 +46,9 @@ if __name__ == "__main__":
     lognames = iter_lognames()
     files = iter_files(lognames)
     lines = cat_lines(files)
-    for line in filter_lines(lines):
-        print(line)
+    # for line in filter_lines(lines):
+    #     print(line)
+    bytes_column = (line.rsplit(None, 1)[1] for line in lines)
+    total: int = sum(int(count) for count in bytes_column if count != "-")
+    # Print total number of transferred bytes in matched lines
+    print("Total: ", total)
