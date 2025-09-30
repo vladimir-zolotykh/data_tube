@@ -19,7 +19,7 @@ def iter_lognames(
 
 def iter_files(paths):
     for path in paths:
-        if path.endswith(".gzip"):
+        if path.endswith(".gz"):
             fd = gzip.open(path)
         elif path.endswith(".bz2"):
             fd = bz2.open(path)
