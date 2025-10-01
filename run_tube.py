@@ -35,8 +35,7 @@ def iter_files(paths) -> Generator[TextIO, None, None]:
 
 def cat_lines(files) -> Generator[str | bytes, None, None]:
     for file in files:
-        for line in file:
-            yield line
+        yield from file
 
 
 def filter_lines(file, pattern: str = "(?i)python") -> Generator[str, None, None]:
