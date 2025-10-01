@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # PYTHON_ARGCOMPLETE_OK
-from typing import Generator, TextIO
+from collections.abc import Iterator
+from typing import TextIO
 from typing import NamedTuple
 import os
 import fnmatch
@@ -19,15 +20,13 @@ class Line(NamedTuple):
     line: str
 
 
-def iter_lognames(
-    top: str = "www", pattern: str = "access-log*"
-) -> Generator[str, None, None]:
+def iter_lognames(top: str = "www", pattern: str = "access-log*") -> Iterator[str]:
     for path, _, names in os.walk(top):
         for name in fnmatch.filter(names, pattern):
             yield os.path.join(path, name)
 
 
-def iter_files(paths: Generator[str, None, None]) -> Generator[TextIO, None, None]:
+def iter_files(paths: Iterator[str]) -> Iterator[TextIO]:
     for path in paths:
         fd: TextIO
         if path.endswith(".gz"):
@@ -40,16 +39,14 @@ def iter_files(paths: Generator[str, None, None]) -> Generator[TextIO, None, Non
             yield file
 
 
-def cat_lines(files: Generator[TextIO, None, None]) -> Generator[Line, None, None]:
+def cat_lines(files: Iterator[TextIO]) -> Iterator[Line]:
     for file in files:
         fname = getattr(file, "name", "<unknown>")
         for lineno, line in enumerate(file, 1):
             yield Line(fname, lineno, line)
 
 
-def filter_lines(
-    lines: Generator[Line, None, None], pattern: str = "(?i)python"
-) -> Generator[Line, None, None]:
+def filter_lines(lines: Iterator[Line], pattern: str = "(?i)python") -> Iterator[Line]:
     for line in lines:
         if re.search(pattern, line.line):
             yield line
