@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 # PYTHON_ARGCOMPLETE_OK
 from typing import Generator, TextIO
+from typing import NamedTuple
 import os
 import fnmatch
 import bz2
@@ -12,6 +13,12 @@ import argcomplete
 import psutil
 
 
+class Line(NamedTuple):
+    path: str
+    lineno: int
+    line: str
+
+
 def iter_lognames(
     top: str = "www", pattern: str = "access-log*"
 ) -> Generator[str, None, None]:
@@ -20,7 +27,7 @@ def iter_lognames(
             yield os.path.join(path, name)
 
 
-def iter_files(paths) -> Generator[TextIO, None, None]:
+def iter_files(paths: Generator[str, None, None]) -> Generator[TextIO, None, None]:
     for path in paths:
         fd: TextIO
         if path.endswith(".gz"):
@@ -33,14 +40,18 @@ def iter_files(paths) -> Generator[TextIO, None, None]:
             yield file
 
 
-def cat_lines(files) -> Generator[str | bytes, None, None]:
+def cat_lines(files: Generator[TextIO, None, None]) -> Generator[Line, None, None]:
     for file in files:
-        yield from file
+        fname = getattr(file, "name", "<unknown>")
+        for lineno, line in enumerate(file, 1):
+            yield Line(fname, lineno, line)
 
 
-def filter_lines(file, pattern: str = "(?i)python") -> Generator[str, None, None]:
-    for line in file:
-        if re.search(pattern, line):
+def filter_lines(
+    lines: Generator[Line, None, None], pattern: str = "(?i)python"
+) -> Generator[Line, None, None]:
+    for line in lines:
+        if re.search(pattern, line.line):
             yield line
 
 
@@ -70,10 +81,11 @@ if __name__ == "__main__":
     files = iter_files(lognames)
     lines = cat_lines(files)
     if args.cmd == "print":
+        print(type(lines))
         for line in filter_lines(lines, args.search_pattern):
-            print(line)
+            print(line.line, end="")
     elif args.cmd == "count-bytes":
-        bytes_column = (line.rsplit(None, 1)[1] for line in lines)
+        bytes_column = (line.line.rsplit(None, 1)[1] for line in lines)
         total: int = sum(int(count) for count in bytes_column if count != "-")
         # Print total number of transferred bytes in matched lines
         print("Total: ", total)
